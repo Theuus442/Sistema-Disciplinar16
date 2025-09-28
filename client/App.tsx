@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/autenticacao/Login";
+import ResponsiveWrapper from "@/components/ResponsiveWrapper";
 import NaoEncontrado from "./pages/erros/NaoEncontrado";
 import GestorDashboard from "./pages/gestor/GestorDashboard";
 import AdministradorDashboard from "./pages/administrador/AdministradorDashboard";
@@ -59,21 +60,21 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Login />} />
-            <Route path="/gestor" element={<GestorDashboard />} />
-            <Route path="/administrador" element={<AdministradorDashboard />} />
-            <Route path="/administrador/usuarios" element={<UsuariosAdminPage />} />
-            <Route path="/administrador/importar-funcionarios" element={<RequireRole allowed={["administrador"]}><ImportarFuncionariosPage /></RequireRole>} />
-            <Route path="/administrador/configuracoes" element={<RequireRole allowed={["administrador"]}><ConfiguracoesSistemaAdminPage /></RequireRole>} />
-            <Route path="/juridico" element={<JuridicoDashboard />} />
-            <Route path="/juridico/processos/aguardando" element={<ProcessosAguardandoAnalise />} />
-            <Route path="/juridico/processos/todos" element={<TodosProcessos />} />
-            <Route path="/juridico/relatorios" element={<Relatorios />} />
-            <Route path="/juridico/processos/:id" element={<RevisaoProcessoJuridico />} />
-            <Route path="/gestor/registrar" element={<GestorRegistrarDesvio />} />
-            <Route path="/gestor/processos" element={<ProcessosPage />} />
-            <Route path="/gestor/processos/:id" element={<ProcessoAcompanhamento />} />
-            <Route path="/gestor/funcionarios" element={<FuncionariosListaPage />} />
-            <Route path="/gestor/funcionarios/:id" element={<FuncionarioPage />} />
+            <Route path="/gestor" element={<ResponsiveWrapper><GestorDashboard /></ResponsiveWrapper>} />
+            <Route path="/administrador" element={<ResponsiveWrapper><AdministradorDashboard /></ResponsiveWrapper>} />
+            <Route path="/administrador/usuarios" element={<ResponsiveWrapper><UsuariosAdminPage /></ResponsiveWrapper>} />
+            <Route path="/administrador/importar-funcionarios" element={<RequireRole allowed={["administrador"]}><ResponsiveWrapper><ImportarFuncionariosPage /></ResponsiveWrapper></RequireRole>} />
+            <Route path="/administrador/configuracoes" element={<RequireRole allowed={["administrador"]}><ResponsiveWrapper><ConfiguracoesSistemaAdminPage /></ResponsiveWrapper></RequireRole>} />
+            <Route path="/juridico" element={<ResponsiveWrapper><JuridicoDashboard /></ResponsiveWrapper>} />
+            <Route path="/juridico/processos/aguardando" element={<ResponsiveWrapper><ProcessosAguardandoAnalise /></ResponsiveWrapper>} />
+            <Route path="/juridico/processos/todos" element={<ResponsiveWrapper><TodosProcessos /></ResponsiveWrapper>} />
+            <Route path="/juridico/relatorios" element={<ResponsiveWrapper><Relatorios /></ResponsiveWrapper>} />
+            <Route path="/juridico/processos/:id" element={<ResponsiveWrapper><RevisaoProcessoJuridico /></ResponsiveWrapper>} />
+            <Route path="/gestor/registrar" element={<ResponsiveWrapper><GestorRegistrarDesvio /></ResponsiveWrapper>} />
+            <Route path="/gestor/processos" element={<ResponsiveWrapper><ProcessosPage /></ResponsiveWrapper>} />
+            <Route path="/gestor/processos/:id" element={<ResponsiveWrapper><ProcessoAcompanhamento /></ResponsiveWrapper>} />
+            <Route path="/gestor/funcionarios" element={<ResponsiveWrapper><FuncionariosListaPage /></ResponsiveWrapper>} />
+            <Route path="/gestor/funcionarios/:id" element={<ResponsiveWrapper><FuncionarioPage /></ResponsiveWrapper>} />
             <Route path="/autenticacao/esqueci-senha" element={<EsqueciSenha />} />
             <Route path="/autenticacao/redefinir-senha" element={<RedefinirSenha />} />
             {/* ADICIONE TODAS AS ROTAS PERSONALIZADAS ACIMA DA ROTA CATCH-ALL "*" */}
