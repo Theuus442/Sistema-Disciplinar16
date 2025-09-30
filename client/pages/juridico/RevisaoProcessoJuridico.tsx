@@ -11,7 +11,6 @@ import RichTextEditor from "@/components/RichTextEditor";
 import { useToast } from "@/hooks/use-toast";
 import { fetchProcessById } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
 
 export default function RevisaoProcessoJuridico() {
   const navegar = useNavigate();
@@ -72,11 +71,14 @@ export default function RevisaoProcessoJuridico() {
       const { updateProcess } = await import("@/lib/api");
       await updateProcess(idProcesso, patch as any);
 
-      // Após salvar a finalização, chamar Edge Function para enviar relatório
+      // Após salvar a finalização, chamar API do servidor (Vercel) para enviar relatório
       try {
-        await supabase.functions.invoke("send-process-report", {
+        const resp = await fetch('/api/send-process-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ process_id: idProcesso }),
         });
+        if (!resp.ok) throw new Error((await resp.json().catch(() => ({})))?.error || `HTTP ${resp.status}`);
       } catch (fx) {
         // Notificar, mas não bloquear o fluxo do usuário
         toast({ title: "Relatório não enviado automaticamente", description: `Você pode reenviar depois. ${errorMessage(fx)}` });
@@ -265,9 +267,14 @@ export default function RevisaoProcessoJuridico() {
                             }
 
                             try {
-                              const { data, error } = await supabase.functions.invoke('send-process-report', { body: JSON.stringify({ process_id: idProcesso, recipients }) }) as any;
-                              if (error) {
-                                toast({ title: 'Erro ao enviar', description: error?.message ?? String(error) });
+                              const resp = await fetch('/api/send-process-report', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ process_id: idProcesso, recipients }),
+                              });
+                              const j = await resp.json().catch(() => ({}));
+                              if (!resp.ok) {
+                                toast({ title: 'Erro ao enviar', description: j?.error || `HTTP ${resp.status}` });
                               } else {
                                 toast({ title: 'Relatório enviado', description: 'E-mails enviados com sucesso.' });
                               }
