@@ -11,7 +11,6 @@ import RichTextEditor from "@/components/RichTextEditor";
 import { useToast } from "@/hooks/use-toast";
 import { fetchProcessById } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
 
 export default function RevisaoProcessoJuridico() {
   const navegar = useNavigate();
