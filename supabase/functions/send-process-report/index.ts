@@ -15,9 +15,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     const { process_id, recipients } = await req.json();
 
-    const resendApiKey = Deno.env.get('RESEND_API_KEY') ?? '';
+    const resendApiKey = (Deno.env.get('RESEND_API_KEY') ?? '').trim();
     if (!resendApiKey) {
       return new Response(JSON.stringify({ error: 'RESEND_API_KEY não configurada' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+    if (!resendApiKey.startsWith('re_')) {
+      return new Response(JSON.stringify({ error: 'RESEND_API_KEY inválida: esperado formato que inicia com "re_" (Resend API key).' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       });
