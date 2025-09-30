@@ -74,6 +74,8 @@ export const sendProcessReport: RequestHandler = async (req, res) => {
       <p><strong>Número da Ocorrência no SI:</strong> ${(processData as any)?.si_occurrence_number ?? ''}</p>
     `;
 
+    const resendFrom = sanitizeEnv(process.env.RESEND_FROM) || 'onboarding@resend.dev';
+
     // Send via Resend HTTP API to avoid SDK dependency
     const resp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -82,7 +84,7 @@ export const sendProcessReport: RequestHandler = async (req, res) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Sistema Disciplinar <onboarding@resend.dev>',
+        from: `Sistema Disciplinar <${resendFrom}>`,
         to,
         subject,
         html,
