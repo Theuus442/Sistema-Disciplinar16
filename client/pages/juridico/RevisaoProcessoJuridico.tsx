@@ -75,7 +75,7 @@ export default function RevisaoProcessoJuridico() {
       // Após salvar a finalização, chamar Edge Function para enviar relatório
       try {
         await supabase.functions.invoke("send-process-report", {
-          body: JSON.stringify({ process_id: idProcesso }),
+          body: { process_id: idProcesso },
         });
       } catch (fx) {
         // Notificar, mas não bloquear o fluxo do usuário
