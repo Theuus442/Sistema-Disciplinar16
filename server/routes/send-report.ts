@@ -32,8 +32,13 @@ export const sendProcessReport: RequestHandler = async (req, res) => {
     const recipients = Array.isArray(body.recipients) ? body.recipients as string[] : [];
     if (!process_id) return res.status(400).json({ error: 'process_id obrigatório' });
 
+    const smtpHost = sanitizeEnv(process.env.SMTP_HOST);
+    const smtpPort = Number(sanitizeEnv((process.env as any).SMTP_PORT) || 587);
+    const smtpUser = sanitizeEnv(process.env.SMTP_USER);
+    const smtpPass = sanitizeEnv(process.env.SMTP_PASS);
+    const smtpFrom = sanitizeEnv(process.env.SMTP_FROM);
+
     const resendApiKey = sanitizeEnv(process.env.RESEND_API_KEY);
-    if (!resendApiKey) return res.status(500).json({ error: 'RESEND_API_KEY ausente (configure no ambiente da Vercel)' });
 
     const supabaseUrl = sanitizeEnv(process.env.SUPABASE_URL || (process.env as any).VITE_SUPABASE_URL);
     const serviceKey = sanitizeEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
