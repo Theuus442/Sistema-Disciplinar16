@@ -265,7 +265,7 @@ export default function RevisaoProcessoJuridico() {
                             }
 
                             try {
-                              const { data, error } = await supabase.functions.invoke('send-process-report', { body: JSON.stringify({ process_id: idProcesso, recipients }) }) as any;
+                              const { data, error } = await supabase.functions.invoke('send-process-report', { body: { process_id: idProcesso, recipients } }) as any;
                               if (error) {
                                 toast({ title: 'Erro ao enviar', description: error?.message ?? String(error) });
                               } else {
