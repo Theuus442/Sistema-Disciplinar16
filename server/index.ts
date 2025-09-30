@@ -48,5 +48,8 @@ export function createServer() {
   // Processes listing (service role)
   app.get("/api/processes", listProcesses as any);
 
+  // Email report (Vercel server route)
+  app.post("/api/send-process-report", sendProcessReport as any);
+
   return app;
 }
