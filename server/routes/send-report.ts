@@ -79,9 +79,30 @@ export const sendProcessReport: RequestHandler = async (req, res) => {
       <p><strong>Número da Ocorrência no SI:</strong> ${(processData as any)?.si_occurrence_number ?? ''}</p>
     `;
 
+    // Prefer SMTP if configured (works on Vercel)
+    if (smtpHost && smtpUser && smtpPass && smtpFrom) {
+      const nodemailer = await import('nodemailer');
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: { user: smtpUser, pass: smtpPass },
+      } as any);
+
+      await transporter.sendMail({
+        from: `Sistema Disciplinar <${smtpFrom}>`,
+        to,
+        subject,
+        html,
+      } as any);
+
+      return res.status(200).json({ message: 'Relatório enviado com sucesso via SMTP!' });
+    }
+
+    // Fallback: Resend API
+    if (!resendApiKey) return res.status(500).json({ error: 'RESEND_API_KEY ausente (ou configure SMTP_*)' });
     const resendFrom = sanitizeEnv(process.env.RESEND_FROM) || 'onboarding@resend.dev';
 
-    // Send via Resend HTTP API to avoid SDK dependency
     const resp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
