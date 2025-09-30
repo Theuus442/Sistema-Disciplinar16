@@ -4,6 +4,7 @@ import cors from "cors";
 import { handleDemo } from "./routes/demo";
 import { createUserAndProfile, listProfiles, listRecentLogins, listRecentActivities, listPermissions, getProfilePermissions, addProfilePermission, removeProfilePermission, importEmployees, getUserPermissions, addUserPermission, removeUserPermission, getUserOverrides, saveUserOverrides, updateUserProfile, replaceProfilePermissions } from "./routes/admin";
 import { listProcesses } from "./routes/processes";
+import { sendProcessReport } from "./routes/send-report";
 
 export function createServer() {
   const app = express();
