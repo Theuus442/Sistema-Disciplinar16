@@ -78,15 +78,66 @@ export const sendProcessReport: RequestHandler = async (req, res) => {
     const parecerJuridico = overrides.parecer_juridico ?? null;
 
     const subject = `Processo Disciplinar Finalizado: ${(processData as any)?.employees?.nome_completo ?? ''}`;
-    const htmlParts: string[] = [];
-    htmlParts.push('<h1>Relatório de Medida Disciplinar</h1>');
-    htmlParts.push(`<p>O processo disciplinar para o funcionário <strong>${(processData as any)?.employees?.nome_completo ?? ''}</strong> foi finalizado.</p>`);
-    htmlParts.push(`<p><strong>Tipo de Desvio:</strong> ${tipoDesvio ?? ''}</p>`);
-    htmlParts.push(`<p><strong>Classificação:</strong> ${classificacao ?? 'Leve'}</p>`);
-    htmlParts.push(`<p><strong>Resolução Final:</strong> ${resolucaoFinal ?? ''}</p>`);
-    if (parecerJuridico) htmlParts.push(`<h2>Parecer Jurídico</h2><div>${parecerJuridico}</div>`);
-    htmlParts.push(`<p><strong>Número da Ocorrência no SI:</strong> ${siOccurrence ?? ''}</p>`);
-    const html = htmlParts.join('\n');
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório de Medida Disciplinar</title>
+</head>
+<body style="margin:0;padding:0;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color:#f2f4f6;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#f2f4f6;padding:20px;">
+    <tr>
+      <td align="center">
+        <table width="600" border="0" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;border:1px solid #e8e5ef;box-shadow:0 4px 8px rgba(0,0,0,0.05);">
+          <tr>
+            <td align="center" style="padding:20px 0;">
+              <h1 style="color:#333333;margin:0;">Sistema Disciplinar</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px;">
+              <h2 style="color:#333333;text-align:center;">Relatório de Medida Disciplinar</h2>
+              <p style="color:#555555;font-size:16px;line-height:1.5;">Olá,</p>
+              <p style="color:#555555;font-size:16px;line-height:1.5;">O processo disciplinar para o funcionário <strong>${(processData as any)?.employees?.nome_completo ?? ''}</strong> foi finalizado. Abaixo seguem as informações registradas:</p>
+
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top:10px;margin-bottom:10px;">
+                <tr>
+                  <td style="padding:8px 0;"><strong>Tipo de Desvio:</strong></td>
+                  <td style="padding:8px 0;">${tipoDesvio ?? ''}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;"><strong>Classificação:</strong></td>
+                  <td style="padding:8px 0;">${classificacao ?? 'Leve'}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;"><strong>Resolução Final:</strong></td>
+                  <td style="padding:8px 0;">${resolucaoFinal ?? ''}</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;"><strong>Número da Ocorrência no SI:</strong></td>
+                  <td style="padding:8px 0;">${siOccurrence ?? ''}</td>
+                </tr>
+              </table>
+
+              ${parecerJuridico ? `<div style="margin-top:12px;padding:12px;border-radius:6px;background:#fafafa;border:1px solid #eee;"><h3 style="margin:0 0 8px 0;color:#333333;">Parecer Jurídico</h3><div style="color:#555555;font-size:15px;line-height:1.5;">${parecerJuridico}</div></div>` : ''}
+
+              <p style="color:#555555;font-size:16px;line-height:1.5;margin-top:16px;">Caso precise reenviar o relatório ou obter informações adicionais, entre em contato com o setor responsável.</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:20px 40px;border-top:1px solid #e8e5ef;font-size:12px;color:#999999;">
+              <p style="margin:0;">Este é um e-mail automático. Por favor, não responda.</p>
+              <p style="margin:4px 0 0 0;">&copy; 2025 Sistema Disciplinar. Todos os direitos reservados.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
     // Prefer SMTP if configured (works on Vercel)
     if (smtpHost && smtpUser && smtpPass && smtpFrom) {
