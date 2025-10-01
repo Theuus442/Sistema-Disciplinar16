@@ -140,6 +140,9 @@ export const sendProcessReport: RequestHandler = async (req, res) => {
 </html>`;
 
     // Prefer SMTP if configured (works on Vercel)
+    // Log attempt
+    console.info('sendProcessReport: sending', { to, subject, recipientsCount: Array.isArray(to) ? to.length : 1 });
+
     if (smtpHost && smtpUser && smtpPass && smtpFrom) {
       const nodemailer = await import('nodemailer');
       const transporter = nodemailer.createTransport({
@@ -149,14 +152,15 @@ export const sendProcessReport: RequestHandler = async (req, res) => {
         auth: { user: smtpUser, pass: smtpPass },
       } as any);
 
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: `Sistema Disciplinar <${smtpFrom}>`,
         to,
         subject,
         html,
       } as any);
 
-      return res.status(200).json({ message: 'Relatório enviado com sucesso via SMTP!' });
+      console.info('sendProcessReport: smtp send result', { messageId: info?.messageId, accepted: info?.accepted, rejected: info?.rejected });
+      return res.status(200).json({ message: 'Relatório enviado com sucesso via SMTP!', info: { messageId: info?.messageId, accepted: info?.accepted, rejected: info?.rejected } });
     }
 
     // Fallback: Resend API
@@ -178,11 +182,12 @@ export const sendProcessReport: RequestHandler = async (req, res) => {
     });
 
     const json = await resp.json().catch(() => ({}));
+    console.info('sendProcessReport: resend response', { status: resp.status, body: json });
     if (!resp.ok) {
-      return res.status(500).json({ error: json?.error || json?.message || 'Falha ao enviar e-mail' });
+      return res.status(500).json({ error: json?.error || json?.message || 'Falha ao enviar e-mail', details: json });
     }
 
-    return res.status(200).json({ message: 'Relatório enviado com sucesso!', id: json?.id || null });
+    return res.status(200).json({ message: 'Relatório enviado com sucesso!', id: json?.id || null, details: json });
   } catch (e: any) {
     return res.status(500).json({ error: e?.message || String(e) });
   }
