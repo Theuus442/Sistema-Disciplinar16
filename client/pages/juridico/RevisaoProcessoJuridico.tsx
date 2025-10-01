@@ -266,11 +266,31 @@ export default function RevisaoProcessoJuridico() {
                               return;
                             }
 
+                            // Build a best-effort resolucao from the current form state so the email contains the parecer
+                            const currentResolucao =
+                              decisao === "Arquivar Processo"
+                                ? "Arquivado"
+                                : decisao === "Aplicar Medida Disciplinar"
+                                ? `Medida disciplinar: ${medidaRecomendada}`
+                                : "Recomendação: Justa Causa Direta";
+
+                            const payload: any = {
+                              process_id: idProcesso,
+                              recipients,
+                              overrides: {
+                                resolucao: `${currentResolucao}${parecerJuridico ? ` — Parecer: ${parecerJuridico}` : ""}`,
+                                si_occurrence_number: numeroOcorrenciaSI?.trim() || "",
+                                tipo_desvio: processoJuridico?.tipoDesvio || "",
+                                classificacao: processoJuridico?.classificacao || "",
+                                parecer_juridico: parecerJuridico || null,
+                              },
+                            };
+
                             try {
                               const resp = await fetch('/api/send-process-report', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ process_id: idProcesso, recipients }),
+                                body: JSON.stringify(payload),
                               });
                               const j = await resp.json().catch(() => ({}));
                               if (!resp.ok) {

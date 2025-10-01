@@ -69,15 +69,24 @@ export const sendProcessReport: RequestHandler = async (req, res) => {
     const to = recFromBody.length > 0 ? recFromBody : recFromRow;
     if (to.length === 0) return res.status(200).json({ message: 'Processo finalizado, mas nenhum e-mail de notificação foi fornecido.' });
 
+    // Allow caller to provide overrides (useful when sending immediately without saving the process)
+    const overrides = (body && typeof body === 'object' ? body.overrides || {} : {}) as any;
+    const tipoDesvio = overrides.tipo_desvio ?? (processData as any)?.tipo_desvio ?? '';
+    const classificacao = overrides.classificacao ?? (processData as any)?.classificacao ?? 'Leve';
+    const resolucaoFinal = overrides.resolucao ?? (processData as any)?.resolucao ?? '';
+    const siOccurrence = overrides.si_occurrence_number ?? (processData as any)?.si_occurrence_number ?? '';
+    const parecerJuridico = overrides.parecer_juridico ?? null;
+
     const subject = `Processo Disciplinar Finalizado: ${(processData as any)?.employees?.nome_completo ?? ''}`;
-    const html = `
-      <h1>Relatório de Medida Disciplinar</h1>
-      <p>O processo disciplinar para o funcionário <strong>${(processData as any)?.employees?.nome_completo ?? ''}</strong> foi finalizado.</p>
-      <p><strong>Tipo de Desvio:</strong> ${(processData as any)?.tipo_desvio ?? ''}</p>
-      <p><strong>Classificação:</strong> ${(processData as any)?.classificacao ?? ''}</p>
-      <p><strong>Resolução Final:</strong> ${(processData as any)?.resolucao ?? ''}</p>
-      <p><strong>Número da Ocorrência no SI:</strong> ${(processData as any)?.si_occurrence_number ?? ''}</p>
-    `;
+    const htmlParts: string[] = [];
+    htmlParts.push('<h1>Relatório de Medida Disciplinar</h1>');
+    htmlParts.push(`<p>O processo disciplinar para o funcionário <strong>${(processData as any)?.employees?.nome_completo ?? ''}</strong> foi finalizado.</p>`);
+    htmlParts.push(`<p><strong>Tipo de Desvio:</strong> ${tipoDesvio ?? ''}</p>`);
+    htmlParts.push(`<p><strong>Classificação:</strong> ${classificacao ?? 'Leve'}</p>`);
+    htmlParts.push(`<p><strong>Resolução Final:</strong> ${resolucaoFinal ?? ''}</p>`);
+    if (parecerJuridico) htmlParts.push(`<h2>Parecer Jurídico</h2><div>${parecerJuridico}</div>`);
+    htmlParts.push(`<p><strong>Número da Ocorrência no SI:</strong> ${siOccurrence ?? ''}</p>`);
+    const html = htmlParts.join('\n');
 
     // Prefer SMTP if configured (works on Vercel)
     if (smtpHost && smtpUser && smtpPass && smtpFrom) {
