@@ -200,6 +200,12 @@ export async function fetchProcessById(id: string) {
     .eq("id", id);
   if (!processes || processes.length === 0) return undefined;
   const p: any = processes[0];
+
+  const resolucao = p.resolucao ?? "";
+  const legalOpinionSaved = resolucao.includes("Parecer:")
+    ? resolucao.split("Parecer:")[1]?.trim() || ""
+    : "";
+
   return {
     id: p.id,
     funcionario: p.employees?.nome_completo ?? "",
@@ -208,7 +214,8 @@ export async function fetchProcessById(id: string) {
     dataAbertura: (() => { const d = p.created_at ?? p.periodo_ocorrencia_inicio ?? p.createdAt; return d ? new Date(d).toLocaleDateString() : ""; })(),
     createdAt: (p.created_at ?? p.periodo_ocorrencia_inicio ?? p.createdAt) ?? null,
     status: normalizeStatus(p.status) as any,
-    resolucao: p.resolucao ?? "",
+    resolucao,
+    legalOpinionSaved,
   };
 }
 
