@@ -194,6 +194,7 @@ export async function fetchProcessById(id: string) {
     .from("processes")
     .select(`
       id, status, classificacao, resolucao, created_at, periodo_ocorrencia_inicio, periodo_ocorrencia_fim,
+      notification_email_1, notification_email_2, notification_email_3,
       employees ( nome_completo ),
       misconduct_types ( name )
     `)
@@ -216,6 +217,9 @@ export async function fetchProcessById(id: string) {
     status: normalizeStatus(p.status) as any,
     resolucao,
     legalOpinionSaved,
+    notification_email_1: p.notification_email_1 ?? "",
+    notification_email_2: p.notification_email_2 ?? "",
+    notification_email_3: p.notification_email_3 ?? "",
   };
 }
 
