@@ -52,5 +52,8 @@ export function createServer() {
   // Email report (Vercel server route)
   app.post("/api/send-process-report", sendProcessReport as any);
 
+  // Send generated document via email
+  app.post("/api/send-document", sendDocument as any);
+
   return app;
 }
