@@ -86,7 +86,9 @@ export default function RevisaoProcessoJuridico() {
 
         if (!emailResponse.ok) {
           const errorData = await emailResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Erro ao enviar documento por email');
+          const errorMsg = errorData.error || errorData.message || `HTTP ${emailResponse.status}`;
+          console.error('Email send error response:', { status: emailResponse.status, error: errorData });
+          throw new Error(errorMsg);
         }
 
         toast({ title: "Sucesso", description: "Documento gerado e enviado por email!" });
