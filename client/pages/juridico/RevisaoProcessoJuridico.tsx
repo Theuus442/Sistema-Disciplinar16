@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import html2pdf from "html2pdf.js";
 
 import SidebarJuridico from "@/components/SidebarJuridico";
 import { Button } from "@/components/ui/button";
