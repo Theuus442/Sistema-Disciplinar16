@@ -105,7 +105,14 @@ export default function RevisaoProcessoJuridico() {
     let mounted = true;
     if (!idProcesso) return;
     fetchProcessById(idProcesso)
-      .then((p) => { if (mounted) setProcessoJuridico(p as any); })
+      .then((p) => {
+        if (mounted) {
+          setProcessoJuridico(p as any);
+          if (p?.notification_email_1) setNotifyEmail1(p.notification_email_1);
+          if (p?.notification_email_2) setNotifyEmail2(p.notification_email_2);
+          if (p?.notification_email_3) setNotifyEmail3(p.notification_email_3);
+        }
+      })
       .catch(() => setProcessoJuridico(null));
     return () => { mounted = false; };
   }, [idProcesso]);
