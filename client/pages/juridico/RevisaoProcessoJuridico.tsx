@@ -58,15 +58,43 @@ export default function RevisaoProcessoJuridico() {
         throw new Error("A resposta da função não foi um HTML válido.");
       }
 
-      const newWindow = window.open();
-      if (newWindow) {
-        newWindow.document.write(htmlContent);
-        newWindow.document.close();
-      } else {
-        toast({ title: "Aviso", description: "Seu navegador bloqueou a abertura de uma nova aba. Por favor, permita pop-ups." });
-      }
+      // Converter HTML para PDF
+      const documentTypeNames: Record<string, string> = {
+        advertencia: "Advertencia_Disciplinar",
+        suspensao: "Suspensao_Disciplinar",
+        justa_causa: "Aviso_Dispensa_Justa_Causa",
+      };
+      const filename = documentTypeNames[docType] || "Documento_Disciplinar";
 
-      // Enviar documento por email
+      const element = document.createElement('div');
+      element.innerHTML = htmlContent;
+
+      const opt = {
+        margin: 10,
+        filename: `${filename}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+      };
+
+      const pdfBlob = await new Promise<Blob>((resolve, reject) => {
+        html2pdf()
+          .set(opt)
+          .from(element)
+          .outputPdf('blob')
+          .then((blob: Blob) => resolve(blob))
+          .catch((err: any) => reject(err));
+      });
+
+      // Fazer download do PDF
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${filename}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      // Enviar PDF por email
       const recipientEmails = [
         notifyEmail1,
         notifyEmail2,
@@ -74,13 +102,24 @@ export default function RevisaoProcessoJuridico() {
       ].filter(Boolean);
 
       if (recipientEmails.length > 0) {
+        // Converter Blob para base64
+        const pdfBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(pdfBlob);
+        });
+
         const emailResponse = await fetch('/api/send-document', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             process_id: idProcesso,
             document_type: docType,
-            html_content: htmlContent,
+            pdf_content: pdfBase64,
             recipients: recipientEmails,
           }),
         });
@@ -92,9 +131,9 @@ export default function RevisaoProcessoJuridico() {
           throw new Error(errorMsg);
         }
 
-        toast({ title: "Sucesso", description: "Documento gerado e enviado por email!" });
+        toast({ title: "Sucesso", description: "PDF gerado, baixado e enviado por email!" });
       } else {
-        toast({ title: "Sucesso", description: "Documento gerado. Nenhum email configurado para envio." });
+        toast({ title: "Sucesso", description: "PDF gerado e baixado com sucesso!" });
       }
     } catch (err: any) {
       console.error("Erro ao gerar documento:", err);
