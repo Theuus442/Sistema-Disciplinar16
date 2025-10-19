@@ -122,18 +122,27 @@ export const sendDocument: RequestHandler = async (req, res) => {
         auth: { user: smtpUser, pass: smtpPass },
       } as any);
 
+      const attachments = [];
+      if (pdf_content) {
+        attachments.push({
+          filename: `${documentTypeName.replace(/\s+/g, "_")}.pdf`,
+          content: Buffer.from(pdf_content, 'base64'),
+          contentType: "application/pdf",
+        });
+      } else if (html_content) {
+        attachments.push({
+          filename: `${documentTypeName.replace(/\s+/g, "_")}.html`,
+          content: html_content,
+          contentType: "text/html",
+        });
+      }
+
       const info = await transporter.sendMail({
         from: `Sistema Disciplinar <${smtpFrom}>`,
         to: recipients,
         subject,
         html: emailHtml,
-        attachments: [
-          {
-            filename: `${documentTypeName.replace(/\s+/g, "_")}.html`,
-            content: html_content,
-            contentType: "text/html",
-          },
-        ],
+        attachments,
       } as any);
 
       console.info("sendDocument: smtp send result", {
