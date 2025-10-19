@@ -351,6 +351,50 @@ export default function RevisaoProcessoJuridico() {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* 4. Gerar Documentos - Apenas quando o processo está Finalizado */}
+                {processoJuridico?.status === "Finalizado" && (
+                  <Card className="border-sis-border bg-white">
+                    <CardHeader>
+                      <CardTitle>Gerar Documentos</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-sis-secondary-text mb-4">Clique em um botão abaixo para gerar o documento correspondente. Ele será aberto em uma nova aba. Use Ctrl+P ou Cmd+P para imprimir como PDF.</p>
+                      <div className="flex flex-wrap gap-3">
+                        {processoJuridico?.resolucao?.includes("Advertência") && (
+                          <Button
+                            onClick={() => handleGenerateDocument('advertencia')}
+                            disabled={loadingDocument}
+                            className="bg-sis-blue hover:bg-blue-700 text-white"
+                          >
+                            {loadingDocument ? "Gerando..." : "Gerar Advertência"}
+                          </Button>
+                        )}
+                        {processoJuridico?.resolucao?.includes("Suspensão") && (
+                          <Button
+                            onClick={() => handleGenerateDocument('suspensao')}
+                            disabled={loadingDocument}
+                            className="bg-sis-blue hover:bg-blue-700 text-white"
+                          >
+                            {loadingDocument ? "Gerando..." : "Gerar Suspensão"}
+                          </Button>
+                        )}
+                        {processoJuridico?.resolucao?.includes("Justa Causa") && (
+                          <Button
+                            onClick={() => handleGenerateDocument('justa_causa')}
+                            disabled={loadingDocument}
+                            className="bg-sis-blue hover:bg-blue-700 text-white"
+                          >
+                            {loadingDocument ? "Gerando..." : "Gerar Justa Causa"}
+                          </Button>
+                        )}
+                      </div>
+                      {!processoJuridico?.resolucao && (
+                        <p className="text-sm text-sis-secondary-text italic">Nenhum documento disponível para este processo.</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
           </div>
