@@ -169,6 +169,21 @@ export const sendDocument: RequestHandler = async (req, res) => {
 
     const resendFrom = sanitizeEnv(process.env.RESEND_FROM) || "onboarding@resend.dev";
 
+    const attachments = [];
+    if (pdf_content) {
+      attachments.push({
+        filename: `${documentTypeName.replace(/\s+/g, "_")}.pdf`,
+        content: pdf_content,
+        content_type: "application/pdf",
+      });
+    } else if (html_content) {
+      attachments.push({
+        filename: `${documentTypeName.replace(/\s+/g, "_")}.html`,
+        content: Buffer.from(html_content).toString("base64"),
+        content_type: "text/html",
+      });
+    }
+
     const resp = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -180,13 +195,7 @@ export const sendDocument: RequestHandler = async (req, res) => {
         to: recipients,
         subject,
         html: emailHtml,
-        attachments: [
-          {
-            filename: `${documentTypeName.replace(/\s+/g, "_")}.html`,
-            content: Buffer.from(html_content).toString("base64"),
-            content_type: "text/html",
-          },
-        ],
+        attachments,
       }),
     });
 
