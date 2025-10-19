@@ -29,6 +29,49 @@ export default function RevisaoProcessoJuridico() {
   const [notifyEmail1, setNotifyEmail1] = useState<string>("");
   const [notifyEmail2, setNotifyEmail2] = useState<string>("");
   const [notifyEmail3, setNotifyEmail3] = useState<string>("");
+  const [loadingDocument, setLoadingDocument] = useState<boolean>(false);
+
+  const handleGenerateDocument = async (docType: 'advertencia' | 'suspensao' | 'justa_causa') => {
+    if (!idProcesso) {
+      toast({ title: "Erro", description: "ID do processo não encontrado." });
+      return;
+    }
+
+    setLoadingDocument(true);
+
+    try {
+      const { data: htmlContent, error } = await supabase.functions.invoke('generate-document', {
+        body: {
+          process_id: idProcesso,
+          document_type: docType,
+        },
+        responseType: 'text',
+      });
+
+      if (error) {
+        console.error("Erro ao chamar Edge Function:", error);
+        throw error;
+      }
+
+      if (!htmlContent || typeof htmlContent !== 'string') {
+        throw new Error("A resposta da função não foi um HTML válido.");
+      }
+
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(htmlContent);
+        newWindow.document.close();
+        toast({ title: "Sucesso", description: "Documento gerado. Use Ctrl+P ou Cmd+P para imprimir como PDF." });
+      } else {
+        toast({ title: "Aviso", description: "Seu navegador bloqueou a abertura de uma nova aba. Por favor, permita pop-ups." });
+      }
+    } catch (err: any) {
+      console.error("Erro ao gerar documento:", err);
+      toast({ title: "Erro ao gerar documento", description: errorMessage(err) });
+    } finally {
+      setLoadingDocument(false);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
