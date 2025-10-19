@@ -11,6 +11,7 @@ import RichTextEditor from "@/components/RichTextEditor";
 import { useToast } from "@/hooks/use-toast";
 import { fetchProcessById } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 export default function RevisaoProcessoJuridico() {
   const navegar = useNavigate();
@@ -28,6 +29,77 @@ export default function RevisaoProcessoJuridico() {
   const [notifyEmail1, setNotifyEmail1] = useState<string>("");
   const [notifyEmail2, setNotifyEmail2] = useState<string>("");
   const [notifyEmail3, setNotifyEmail3] = useState<string>("");
+  const [loadingDocument, setLoadingDocument] = useState<boolean>(false);
+
+  const handleGenerateDocument = async (docType: 'advertencia' | 'suspensao' | 'justa_causa') => {
+    if (!idProcesso) {
+      toast({ title: "Erro", description: "ID do processo não encontrado." });
+      return;
+    }
+
+    setLoadingDocument(true);
+
+    try {
+      const { data: htmlContent, error } = await supabase.functions.invoke('generate-document', {
+        body: {
+          process_id: idProcesso,
+          document_type: docType,
+        },
+        responseType: 'text',
+      });
+
+      if (error) {
+        console.error("Erro ao chamar Edge Function:", error);
+        throw error;
+      }
+
+      if (!htmlContent || typeof htmlContent !== 'string') {
+        throw new Error("A resposta da função não foi um HTML válido.");
+      }
+
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(htmlContent);
+        newWindow.document.close();
+      } else {
+        toast({ title: "Aviso", description: "Seu navegador bloqueou a abertura de uma nova aba. Por favor, permita pop-ups." });
+      }
+
+      // Enviar documento por email
+      const recipientEmails = [
+        notifyEmail1,
+        notifyEmail2,
+        notifyEmail3,
+      ].filter(Boolean);
+
+      if (recipientEmails.length > 0) {
+        const emailResponse = await fetch('/api/send-document', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            process_id: idProcesso,
+            document_type: docType,
+            html_content: htmlContent,
+            recipients: recipientEmails,
+          }),
+        });
+
+        if (!emailResponse.ok) {
+          const errorData = await emailResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Erro ao enviar documento por email');
+        }
+
+        toast({ title: "Sucesso", description: "Documento gerado e enviado por email!" });
+      } else {
+        toast({ title: "Sucesso", description: "Documento gerado. Nenhum email configurado para envio." });
+      }
+    } catch (err: any) {
+      console.error("Erro ao gerar documento:", err);
+      toast({ title: "Erro ao gerar documento", description: errorMessage(err) });
+    } finally {
+      setLoadingDocument(false);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -307,6 +379,50 @@ export default function RevisaoProcessoJuridico() {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* 4. Gerar Documentos - Apenas quando o processo está Finalizado */}
+                {processoJuridico?.status === "Finalizado" && (
+                  <Card className="border-sis-border bg-white">
+                    <CardHeader>
+                      <CardTitle>Gerar Documentos</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-sis-secondary-text mb-4">Clique em um botão abaixo para gerar o documento correspondente. O documento será aberto em uma nova aba e enviado por email aos destinatários configurados.</p>
+                      <div className="flex flex-wrap gap-3">
+                        {processoJuridico?.resolucao?.includes("Advertência") && (
+                          <Button
+                            onClick={() => handleGenerateDocument('advertencia')}
+                            disabled={loadingDocument}
+                            className="bg-sis-blue hover:bg-blue-700 text-white"
+                          >
+                            {loadingDocument ? "Gerando..." : "Gerar Advertência"}
+                          </Button>
+                        )}
+                        {processoJuridico?.resolucao?.includes("Suspensão") && (
+                          <Button
+                            onClick={() => handleGenerateDocument('suspensao')}
+                            disabled={loadingDocument}
+                            className="bg-sis-blue hover:bg-blue-700 text-white"
+                          >
+                            {loadingDocument ? "Gerando..." : "Gerar Suspensão"}
+                          </Button>
+                        )}
+                        {processoJuridico?.resolucao?.includes("Justa Causa") && (
+                          <Button
+                            onClick={() => handleGenerateDocument('justa_causa')}
+                            disabled={loadingDocument}
+                            className="bg-sis-blue hover:bg-blue-700 text-white"
+                          >
+                            {loadingDocument ? "Gerando..." : "Gerar Justa Causa"}
+                          </Button>
+                        )}
+                      </div>
+                      {!processoJuridico?.resolucao && (
+                        <p className="text-sm text-sis-secondary-text italic">Nenhum documento disponível para este processo.</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
           </div>

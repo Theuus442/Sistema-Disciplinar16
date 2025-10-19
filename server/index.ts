@@ -5,6 +5,7 @@ import { handleDemo } from "./routes/demo";
 import { createUserAndProfile, listProfiles, listRecentLogins, listRecentActivities, listPermissions, getProfilePermissions, addProfilePermission, removeProfilePermission, importEmployees, getUserPermissions, addUserPermission, removeUserPermission, getUserOverrides, saveUserOverrides, updateUserProfile, replaceProfilePermissions } from "./routes/admin";
 import { listProcesses } from "./routes/processes";
 import { sendProcessReport } from "./routes/send-report";
+import { sendDocument } from "./routes/send-document";
 
 export function createServer() {
   const app = express();
@@ -50,6 +51,9 @@ export function createServer() {
 
   // Email report (Vercel server route)
   app.post("/api/send-process-report", sendProcessReport as any);
+
+  // Send generated document via email
+  app.post("/api/send-document", sendDocument as any);
 
   return app;
 }
