@@ -23,11 +23,13 @@ export const sendDocument: RequestHandler = async (req, res) => {
     const body = (req.body || {}) as any;
     const process_id = String(body.process_id || "").trim();
     const document_type = String(body.document_type || "").trim();
+    const pdf_content = String(body.pdf_content || "").trim();
     const html_content = String(body.html_content || "").trim();
     const recipients = Array.isArray(body.recipients) ? (body.recipients as string[]) : [];
 
-    if (!process_id || !document_type || !html_content) {
-      return res.status(400).json({ error: "process_id, document_type e html_content são obrigatórios" });
+    const content = pdf_content || html_content;
+    if (!process_id || !document_type || !content) {
+      return res.status(400).json({ error: "process_id, document_type e pdf_content (ou html_content) são obrigatórios" });
     }
 
     if (recipients.length === 0) {
@@ -120,18 +122,27 @@ export const sendDocument: RequestHandler = async (req, res) => {
         auth: { user: smtpUser, pass: smtpPass },
       } as any);
 
+      const attachments = [];
+      if (pdf_content) {
+        attachments.push({
+          filename: `${documentTypeName.replace(/\s+/g, "_")}.pdf`,
+          content: Buffer.from(pdf_content, 'base64'),
+          contentType: "application/pdf",
+        });
+      } else if (html_content) {
+        attachments.push({
+          filename: `${documentTypeName.replace(/\s+/g, "_")}.html`,
+          content: html_content,
+          contentType: "text/html",
+        });
+      }
+
       const info = await transporter.sendMail({
         from: `Sistema Disciplinar <${smtpFrom}>`,
         to: recipients,
         subject,
         html: emailHtml,
-        attachments: [
-          {
-            filename: `${documentTypeName.replace(/\s+/g, "_")}.html`,
-            content: html_content,
-            contentType: "text/html",
-          },
-        ],
+        attachments,
       } as any);
 
       console.info("sendDocument: smtp send result", {
@@ -158,6 +169,21 @@ export const sendDocument: RequestHandler = async (req, res) => {
 
     const resendFrom = sanitizeEnv(process.env.RESEND_FROM) || "onboarding@resend.dev";
 
+    const attachments = [];
+    if (pdf_content) {
+      attachments.push({
+        filename: `${documentTypeName.replace(/\s+/g, "_")}.pdf`,
+        content: pdf_content,
+        content_type: "application/pdf",
+      });
+    } else if (html_content) {
+      attachments.push({
+        filename: `${documentTypeName.replace(/\s+/g, "_")}.html`,
+        content: Buffer.from(html_content).toString("base64"),
+        content_type: "text/html",
+      });
+    }
+
     const resp = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -169,13 +195,7 @@ export const sendDocument: RequestHandler = async (req, res) => {
         to: recipients,
         subject,
         html: emailHtml,
-        attachments: [
-          {
-            filename: `${documentTypeName.replace(/\s+/g, "_")}.html`,
-            content: Buffer.from(html_content).toString("base64"),
-            content_type: "text/html",
-          },
-        ],
+        attachments,
       }),
     });
 
