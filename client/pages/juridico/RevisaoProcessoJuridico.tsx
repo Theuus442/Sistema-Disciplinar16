@@ -86,7 +86,9 @@ export default function RevisaoProcessoJuridico() {
 
         if (!emailResponse.ok) {
           const errorData = await emailResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Erro ao enviar documento por email');
+          const errorMsg = errorData.error || errorData.message || `HTTP ${emailResponse.status}`;
+          console.error('Email send error response:', { status: emailResponse.status, error: errorData });
+          throw new Error(errorMsg);
         }
 
         toast({ title: "Sucesso", description: "Documento gerado e enviado por email!" });
@@ -105,7 +107,14 @@ export default function RevisaoProcessoJuridico() {
     let mounted = true;
     if (!idProcesso) return;
     fetchProcessById(idProcesso)
-      .then((p) => { if (mounted) setProcessoJuridico(p as any); })
+      .then((p) => {
+        if (mounted) {
+          setProcessoJuridico(p as any);
+          if (p?.notification_email_1) setNotifyEmail1(p.notification_email_1);
+          if (p?.notification_email_2) setNotifyEmail2(p.notification_email_2);
+          if (p?.notification_email_3) setNotifyEmail3(p.notification_email_3);
+        }
+      })
       .catch(() => setProcessoJuridico(null));
     return () => { mounted = false; };
   }, [idProcesso]);

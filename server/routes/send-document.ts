@@ -147,6 +147,12 @@ export const sendDocument: RequestHandler = async (req, res) => {
 
     // Fallback: Resend API
     if (!resendApiKey) {
+      console.error("sendDocument: RESEND_API_KEY não encontrado. Variáveis disponíveis:", {
+        RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+        RESEND_FROM: !!process.env.RESEND_FROM,
+        SMTP_HOST: !!process.env.SMTP_HOST,
+        SMTP_USER: !!process.env.SMTP_USER,
+      });
       return res.status(500).json({ error: "RESEND_API_KEY ausente (ou configure SMTP_*)" });
     }
 
