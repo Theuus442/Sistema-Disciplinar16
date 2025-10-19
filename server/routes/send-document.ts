@@ -23,11 +23,13 @@ export const sendDocument: RequestHandler = async (req, res) => {
     const body = (req.body || {}) as any;
     const process_id = String(body.process_id || "").trim();
     const document_type = String(body.document_type || "").trim();
+    const pdf_content = String(body.pdf_content || "").trim();
     const html_content = String(body.html_content || "").trim();
     const recipients = Array.isArray(body.recipients) ? (body.recipients as string[]) : [];
 
-    if (!process_id || !document_type || !html_content) {
-      return res.status(400).json({ error: "process_id, document_type e html_content são obrigatórios" });
+    const content = pdf_content || html_content;
+    if (!process_id || !document_type || !content) {
+      return res.status(400).json({ error: "process_id, document_type e pdf_content (ou html_content) são obrigatórios" });
     }
 
     if (recipients.length === 0) {
