@@ -150,7 +150,8 @@ export const sendDocument: RequestHandler = async (req, res) => {
       return res.status(500).json({ error: "RESEND_API_KEY ausente (ou configure SMTP_*)" });
     }
 
-    const resendFrom = sanitizeEnv(process.env.RESEND_FROM) || "onboarding@resend.dev";
+    const resendFromEnv = sanitizeEnv(process.env.RESEND_FROM);
+    const resendFrom = resendFromEnv && resendFromEnv.includes('@') ? resendFromEnv : "onboarding@resend.dev";
 
     const resp = await fetch("https://api.resend.com/emails", {
       method: "POST",
