@@ -193,9 +193,12 @@ export default function FormInstauracaoSindicancia({
       onSuccess();
     } catch (err: any) {
       console.error("Erro ao salvar sindicância:", err);
+      const fullMessage = errorMessage(err);
+      const detailedMessage = err?.message || err?.error?.message || JSON.stringify(err) || "Erro desconhecido";
+      console.error("Detalhes completos:", detailedMessage);
       toast({
         title: "Erro ao salvar",
-        description: errorMessage(err),
+        description: fullMessage || detailedMessage,
       });
     } finally {
       setLoading(false);
@@ -231,7 +234,7 @@ export default function FormInstauracaoSindicancia({
 
       toast({
         title: "Sucesso",
-        description: "Termo de Sindic��ncia gerado! Verifique a nova aba.",
+        description: "Termo de Sindicância gerado! Verifique a nova aba.",
       });
 
       onClose();
