@@ -157,38 +157,79 @@ function fillTemplate(template: string, data: Record<string, string>): string {
 }
 
 function formatDateTime(date: Date, fusoHorario: string) {
-  if (!date || isNaN(date.getTime())) {
-    return {
-      data: 'N/A',
-      hora: 'N/A',
-      cidadeEData: 'Teresina/Piauí, [data]'
+  try {
+    if (!date || isNaN(date.getTime())) {
+      const agora = new Date()
+      const dataFormatador = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: fusoHorario,
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+      const horaFormatador = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: fusoHorario,
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+      const cidadeFormatador = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: fusoHorario,
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      })
+      return {
+        data: dataFormatador.format(agora),
+        hora: horaFormatador.format(agora),
+        cidadeEData: `Teresina/Piauí, ${cidadeFormatador.format(agora)}`
+      }
     }
-  }
 
-  const dataFormatador = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: fusoHorario,
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
+    const dataFormatador = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: fusoHorario,
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
 
-  const horaFormatador = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: fusoHorario,
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+    const horaFormatador = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: fusoHorario,
+      hour: '2-digit',
+      minute: '2-digit'
+    })
 
-  const cidadeFormatador = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: fusoHorario,
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric'
-  })
+    const cidadeFormatador = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: fusoHorario,
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })
 
-  return {
-    data: dataFormatador.format(date),
-    hora: horaFormatador.format(date),
-    cidadeEData: `Teresina/Piauí, ${cidadeFormatador.format(date)}`
+    return {
+      data: dataFormatador.format(date),
+      hora: horaFormatador.format(date),
+      cidadeEData: `Teresina/Piauí, ${cidadeFormatador.format(date)}`
+    }
+  } catch {
+    const agora = new Date()
+    const dataFormatador = new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+    const horaFormatador = new Intl.DateTimeFormat('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    const cidadeFormatador = new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })
+    return {
+      data: dataFormatador.format(agora),
+      hora: horaFormatador.format(agora),
+      cidadeEData: `Teresina/Piauí, ${cidadeFormatador.format(agora)}`
+    }
   }
 }
 
