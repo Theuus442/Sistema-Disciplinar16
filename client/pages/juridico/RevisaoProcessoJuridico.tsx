@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import RichTextEditor from "@/components/RichTextEditor";
+import FormInstauracaoSindicancia from "@/components/FormInstauracaoSindicancia";
 import { useToast } from "@/hooks/use-toast";
 import { fetchProcessById } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
@@ -31,6 +33,7 @@ export default function RevisaoProcessoJuridico() {
   const [notifyEmail2, setNotifyEmail2] = useState<string>("");
   const [notifyEmail3, setNotifyEmail3] = useState<string>("");
   const [loadingDocument, setLoadingDocument] = useState<boolean>(false);
+  const [abrirFormSindicancia, setAbrirFormSindicancia] = useState(false);
 
   const handleGenerateDocument = async (docType: 'advertencia' | 'suspensao' | 'justa_causa') => {
     if (!idProcesso) {
@@ -159,6 +162,20 @@ export default function RevisaoProcessoJuridico() {
     return () => { mounted = false; };
   }, [idProcesso]);
 
+  const recarregarProcesso = async () => {
+    try {
+      const p = await fetchProcessById(idProcesso);
+      if (p) {
+        setProcessoJuridico(p as any);
+        if (p?.notification_email_1) setNotifyEmail1(p.notification_email_1);
+        if (p?.notification_email_2) setNotifyEmail2(p.notification_email_2);
+        if (p?.notification_email_3) setNotifyEmail3(p.notification_email_3);
+      }
+    } catch {
+      // Falha silenciosa
+    }
+  };
+
   const aoFinalizar = async () => {
     if (!decisao) {
       toast({ title: "Selecione o Resultado da Sindicância", description: "Campo obrigatório." });
@@ -266,6 +283,46 @@ export default function RevisaoProcessoJuridico() {
                     </div>
                                       </CardContent>
                 </Card>
+
+                {/* Botão Instaurar Sindicância - Quando status é "Sindicância" */}
+                {processoJuridico?.status === "Sindicância" && (
+                  <Card className="border-sis-border bg-blue-50 border-blue-200">
+                    <CardHeader>
+                      <CardTitle className="text-blue-900">Instauração de Sindicância</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="mb-4 text-sm text-blue-800">
+                        Este processo está em sindicância. Clique no botão abaixo para registrar os dados da comissão de sindicância, membros e testemunhas.
+                      </p>
+                      <Button
+                        onClick={() => setAbrirFormSindicancia(true)}
+                        className="bg-sis-blue text-white hover:bg-blue-700"
+                      >
+                        Instaurar Sindicância
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Dialog do formulário de Sindicância */}
+                <Dialog open={abrirFormSindicancia} onOpenChange={setAbrirFormSindicancia}>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Instauração de Sindicância</DialogTitle>
+                    </DialogHeader>
+                    <FormInstauracaoSindicancia
+                      processId={idProcesso}
+                      onClose={() => setAbrirFormSindicancia(false)}
+                      onSuccess={() => {
+                        recarregarProcesso();
+                        toast({
+                          title: "Sucesso",
+                          description: "Sindicância instaurada com sucesso!",
+                        });
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
 
                 {/* 2. Análise Jurídica / Sindicância */}
                 <Card className="border-sis-border bg-white">
