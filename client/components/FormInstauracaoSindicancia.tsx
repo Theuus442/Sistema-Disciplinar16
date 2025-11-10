@@ -124,23 +124,17 @@ export default function FormInstauracaoSindicancia({
       return false;
     }
 
-    // Filtrar membros vazios e validar apenas os preenchidos
-    const membrosPreenchidos = membros.filter((m) => m.nome.trim() || m.cargo.trim());
-    if (membrosPreenchidos.length === 0) {
-      toast({
-        title: "Erro",
-        description: "Adicione pelo menos um membro da comissão com nome e cargo.",
-      });
-      return false;
-    }
-
-    const membrosValidos = membrosPreenchidos.every((m) => m.nome.trim() && m.cargo.trim());
-    if (!membrosValidos) {
-      toast({
-        title: "Erro",
-        description: "Todos os membros preenchidos devem ter nome E cargo.",
-      });
-      return false;
+    // Validar os 3 membros obrigatórios (Presidente, Secretário I, Secretário II)
+    const funcoesobrigatorias = ["Presidente", "Secretário I", "Secretário II"];
+    for (const funcao of funcoesobrigatorias) {
+      const membro = membros.find((m) => m.funcao_comissao === funcao);
+      if (!membro || !membro.nome.trim() || !membro.cargo.trim()) {
+        toast({
+          title: "Erro",
+          description: `Preencha nome e cargo para: ${funcao}`,
+        });
+        return false;
+      }
     }
 
     // Filtrar testemunhas vazias e validar apenas as preenchidas
