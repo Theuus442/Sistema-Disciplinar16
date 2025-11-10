@@ -62,6 +62,14 @@ export default function FormInstauracaoSindicancia({
   };
 
   const removerMembro = (index: number) => {
+    // Não permite remover os 3 membros obrigatórios (Presidente, Secretário I, Secretário II)
+    if (membros.length <= 3) {
+      toast({
+        title: "Aviso",
+        description: "Você deve manter os 3 membros obrigatórios da comissão.",
+      });
+      return;
+    }
     setMembros(membros.filter((_, i) => i !== index));
   };
 
