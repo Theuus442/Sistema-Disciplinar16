@@ -34,6 +34,8 @@ export default function FormInstauracaoSindicancia({
 }: FormInstauracaoSindicanciaProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [sindicanciaSalva, setSindicanciaSalva] = useState(false);
+  const [gerandoDoc, setGerandoDoc] = useState(false);
 
   // Dados principais
   const [numeroSindicancia, setNumeroSindicancia] = useState("");
@@ -182,7 +184,27 @@ export default function FormInstauracaoSindicancia({
 
       if (testemunhasError) throw testemunhasError;
 
-      // 4. Chamar Edge Function para gerar o documento
+      toast({
+        title: "Sucesso",
+        description: "Sindicância registrada com sucesso! Agora gere o termo.",
+      });
+
+      setSindicanciaSalva(true);
+      onSuccess();
+    } catch (err: any) {
+      console.error("Erro ao salvar sindicância:", err);
+      toast({
+        title: "Erro ao salvar",
+        description: errorMessage(err),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGerarDocumento = async () => {
+    setGerandoDoc(true);
+    try {
       const { data: htmlContent, error: funcError } = await supabase.functions.invoke(
         "generate-sindicancia-doc",
         {
@@ -200,7 +222,7 @@ export default function FormInstauracaoSindicancia({
         throw new Error("A resposta da função não foi um HTML válido.");
       }
 
-      // 5. Abrir o HTML em nova aba para o usuário imprimir/salvar como PDF
+      // Abrir o HTML em nova aba para o usuário imprimir/salvar como PDF
       const newWindow = window.open();
       if (newWindow) {
         newWindow.document.write(htmlContent);
@@ -209,19 +231,18 @@ export default function FormInstauracaoSindicancia({
 
       toast({
         title: "Sucesso",
-        description: "Sindicância registrada e termo gerado com sucesso!",
+        description: "Termo de Sindic��ncia gerado! Verifique a nova aba.",
       });
 
-      onSuccess();
       onClose();
     } catch (err: any) {
-      console.error("Erro ao salvar sindicância:", err);
+      console.error("Erro ao gerar documento:", err);
       toast({
-        title: "Erro ao salvar",
+        title: "Erro ao gerar documento",
         description: errorMessage(err),
       });
     } finally {
-      setLoading(false);
+      setGerandoDoc(false);
     }
   };
 
@@ -436,18 +457,29 @@ export default function FormInstauracaoSindicancia({
           type="button"
           variant="outline"
           onClick={onClose}
-          disabled={loading}
+          disabled={loading || gerandoDoc}
         >
           Cancelar
         </Button>
-        <Button
-          type="button"
-          onClick={handleSalvar}
-          disabled={loading}
-          className="bg-sis-blue text-white hover:bg-blue-700"
-        >
-          {loading ? "Salvando..." : "Salvar e Gerar Termo"}
-        </Button>
+        {!sindicanciaSalva ? (
+          <Button
+            type="button"
+            onClick={handleSalvar}
+            disabled={loading}
+            className="bg-sis-blue text-white hover:bg-blue-700"
+          >
+            {loading ? "Salvando..." : "Salvar Dados da Sindicância"}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={handleGerarDocumento}
+            disabled={gerandoDoc}
+            className="bg-green-600 text-white hover:bg-green-700"
+          >
+            {gerandoDoc ? "Gerando..." : "Gerar Termo de Sindicância"}
+          </Button>
+        )}
       </div>
     </div>
   );
