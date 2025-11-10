@@ -114,22 +114,34 @@ export default function FormInstauracaoSindicancia({
       return false;
     }
 
-    const membrosValidos = membros.every((m) => m.nome.trim() && m.cargo.trim());
-    if (!membrosValidos) {
+    // Filtrar membros vazios e validar apenas os preenchidos
+    const membrosPreenchidos = membros.filter((m) => m.nome.trim() || m.cargo.trim());
+    if (membrosPreenchidos.length === 0) {
       toast({
         title: "Erro",
-        description: "Todos os membros da comissão devem ter nome e cargo.",
+        description: "Adicione pelo menos um membro da comissão com nome e cargo.",
       });
       return false;
     }
 
-    const testemunhasValidas = testemunhas.every(
-      (t) => t.nome.trim() && t.cpf.trim()
-    );
-    if (!testemunhasValidas) {
+    const membrosValidos = membrosPreenchidos.every((m) => m.nome.trim() && m.cargo.trim());
+    if (!membrosValidos) {
       toast({
         title: "Erro",
-        description: "Todas as testemunhas devem ter nome e CPF.",
+        description: "Todos os membros preenchidos devem ter nome E cargo.",
+      });
+      return false;
+    }
+
+    // Filtrar testemunhas vazias e validar apenas as preenchidas
+    const testemunhasPreenchidas = testemunhas.filter((t) => t.nome.trim() || t.cpf.trim());
+    const testemunhasValidas = testemunhasPreenchidas.every(
+      (t) => t.nome.trim() && t.cpf.trim()
+    );
+    if (testemunhasPreenchidas.length > 0 && !testemunhasValidas) {
+      toast({
+        title: "Erro",
+        description: "Todas as testemunhas preenchidas devem ter nome E CPF.",
       });
       return false;
     }
