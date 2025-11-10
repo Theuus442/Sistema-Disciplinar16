@@ -182,9 +182,34 @@ export default function FormInstauracaoSindicancia({
 
       if (testemunhasError) throw testemunhasError;
 
+      // 4. Chamar Edge Function para gerar o documento
+      const { data: htmlContent, error: funcError } = await supabase.functions.invoke(
+        "generate-sindicancia-doc",
+        {
+          body: { process_id: processId },
+          responseType: "text",
+        }
+      );
+
+      if (funcError) {
+        console.error("Erro ao gerar documento:", funcError);
+        throw funcError;
+      }
+
+      if (!htmlContent || typeof htmlContent !== "string") {
+        throw new Error("A resposta da função não foi um HTML válido.");
+      }
+
+      // 5. Abrir o HTML em nova aba para o usuário imprimir/salvar como PDF
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(htmlContent);
+        newWindow.document.close();
+      }
+
       toast({
         title: "Sucesso",
-        description: "Sindicância registrada com sucesso!",
+        description: "Sindicância registrada e termo gerado com sucesso!",
       });
 
       onSuccess();
