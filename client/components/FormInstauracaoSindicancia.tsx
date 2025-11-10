@@ -168,33 +168,39 @@ export default function FormInstauracaoSindicancia({
 
       if (sindError) throw sindError;
 
-      // 2. Salvar membros da comissão
-      const membrosParaSalvar = membros.map((m) => ({
-        sindicancia_id: sindicancia.id,
-        nome: m.nome.trim(),
-        cargo: m.cargo.trim(),
-        funcao_comissao: m.funcao_comissao,
-        oab: m.oab?.trim() || null,
-      }));
+      // 2. Salvar membros da comissão (apenas os preenchidos)
+      const membrosPreenchidos = membros.filter((m) => m.nome.trim() && m.cargo.trim());
+      if (membrosPreenchidos.length > 0) {
+        const membrosParaSalvar = membrosPreenchidos.map((m) => ({
+          sindicancia_id: sindicancia.id,
+          nome: m.nome.trim(),
+          cargo: m.cargo.trim(),
+          funcao_comissao: m.funcao_comissao,
+          oab: m.oab?.trim() || null,
+        }));
 
-      const { error: membrosError } = await supabase
-        .from("comissao_membros")
-        .insert(membrosParaSalvar);
+        const { error: membrosError } = await supabase
+          .from("comissao_membros")
+          .insert(membrosParaSalvar);
 
-      if (membrosError) throw membrosError;
+        if (membrosError) throw membrosError;
+      }
 
-      // 3. Salvar testemunhas
-      const testemunhasParaSalvar = testemunhas.map((t) => ({
-        sindicancia_id: sindicancia.id,
-        nome: t.nome.trim(),
-        cpf: t.cpf.trim(),
-      }));
+      // 3. Salvar testemunhas (apenas as preenchidas)
+      const testemunhasPreenchidas = testemunhas.filter((t) => t.nome.trim() && t.cpf.trim());
+      if (testemunhasPreenchidas.length > 0) {
+        const testemunhasParaSalvar = testemunhasPreenchidas.map((t) => ({
+          sindicancia_id: sindicancia.id,
+          nome: t.nome.trim(),
+          cpf: t.cpf.trim(),
+        }));
 
-      const { error: testemunhasError } = await supabase
-        .from("sindicancia_testemunhas")
-        .insert(testemunhasParaSalvar);
+        const { error: testemunhasError } = await supabase
+          .from("sindicancia_testemunhas")
+          .insert(testemunhasParaSalvar);
 
-      if (testemunhasError) throw testemunhasError;
+        if (testemunhasError) throw testemunhasError;
+      }
 
       toast({
         title: "Sucesso",
