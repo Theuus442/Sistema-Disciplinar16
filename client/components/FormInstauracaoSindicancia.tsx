@@ -42,9 +42,11 @@ export default function FormInstauracaoSindicancia({
   const [nomeInstituidor, setNomeInstituidor] = useState("");
   const [cpfInstituidor, setCpfInstituidor] = useState("");
 
-  // Membros da comissão
+  // Membros da comissão (3 membros obrigatórios)
   const [membros, setMembros] = useState<ComissaoMembro[]>([
     { nome: "", cargo: "", funcao_comissao: "Presidente", oab: "" },
+    { nome: "", cargo: "", funcao_comissao: "Secretário I", oab: "" },
+    { nome: "", cargo: "", funcao_comissao: "Secretário II", oab: "" },
   ]);
 
   // Testemunhas
