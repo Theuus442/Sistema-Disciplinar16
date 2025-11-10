@@ -225,6 +225,13 @@ export default function FormInstauracaoSindicancia({
         throw new Error("A resposta da função não foi um HTML válido.");
       }
 
+      // Check if response contains an error message
+      if (htmlContent.includes("<h1>Error</h1>") || htmlContent.includes("<h1>error</h1>")) {
+        const errorMatch = htmlContent.match(/<p>(.*?)<\/p>/);
+        const errorMsg = errorMatch ? errorMatch[1] : "Erro ao gerar o documento";
+        throw new Error(errorMsg);
+      }
+
       // Abrir o HTML em nova aba para o usuário imprimir/salvar como PDF
       const newWindow = window.open();
       if (newWindow) {
