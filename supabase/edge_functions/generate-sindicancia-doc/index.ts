@@ -205,9 +205,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const { process_id } = await req.json()
 
     if (!process_id) {
-      return new Response(JSON.stringify({ error: 'process_id é obrigatório' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+      const errorHtml = '<html><body><h1>Error</h1><p>process_id é obrigatório</p></body></html>'
+      return new Response(errorHtml, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+        status: 200,
       })
     }
 
@@ -215,9 +216,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
     if (!supabaseUrl || !serviceKey) {
-      return new Response(JSON.stringify({ error: 'SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausentes' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+      const errorHtml = '<html><body><h1>Error</h1><p>SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausentes</p></body></html>'
+      return new Response(errorHtml, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+        status: 200,
       })
     }
 
@@ -235,9 +237,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .single()
 
     if (sindError || !sindicancias) {
-      return new Response(JSON.stringify({ error: 'Sindicância não encontrada para este processo', details: sindError?.message }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 404,
+      const errorHtml = `<html><body><h1>Error</h1><p>Sindicância não encontrada para este processo: ${sindError?.message || ''}</p></body></html>`
+      return new Response(errorHtml, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+        status: 200,
       })
     }
 
@@ -290,9 +293,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     })
   } catch (error: any) {
     console.error('generate-sindicancia-doc error:', error)
-    return new Response(JSON.stringify({ error: error?.message || String(error) }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
+    const errorHtml = `<html><body><h1>Error</h1><p>${error?.message || String(error)}</p></body></html>`
+    return new Response(errorHtml, {
+      headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+      status: 200,
     })
   }
 })
