@@ -42,9 +42,11 @@ export default function FormInstauracaoSindicancia({
   const [nomeInstituidor, setNomeInstituidor] = useState("");
   const [cpfInstituidor, setCpfInstituidor] = useState("");
 
-  // Membros da comissão
+  // Membros da comissão (3 membros obrigatórios)
   const [membros, setMembros] = useState<ComissaoMembro[]>([
     { nome: "", cargo: "", funcao_comissao: "Presidente", oab: "" },
+    { nome: "", cargo: "", funcao_comissao: "Secretário I", oab: "" },
+    { nome: "", cargo: "", funcao_comissao: "Secretário II", oab: "" },
   ]);
 
   // Testemunhas
@@ -60,6 +62,14 @@ export default function FormInstauracaoSindicancia({
   };
 
   const removerMembro = (index: number) => {
+    // Não permite remover os 3 membros obrigatórios (Presidente, Secretário I, Secretário II)
+    if (membros.length <= 3) {
+      toast({
+        title: "Aviso",
+        description: "Você deve manter os 3 membros obrigatórios da comissão.",
+      });
+      return;
+    }
     setMembros(membros.filter((_, i) => i !== index));
   };
 
@@ -114,22 +124,28 @@ export default function FormInstauracaoSindicancia({
       return false;
     }
 
-    const membrosValidos = membros.every((m) => m.nome.trim() && m.cargo.trim());
-    if (!membrosValidos) {
-      toast({
-        title: "Erro",
-        description: "Todos os membros da comissão devem ter nome e cargo.",
-      });
-      return false;
+    // Validar os 3 membros obrigatórios (Presidente, Secretário I, Secretário II)
+    const funcoesobrigatorias = ["Presidente", "Secretário I", "Secretário II"];
+    for (const funcao of funcoesobrigatorias) {
+      const membro = membros.find((m) => m.funcao_comissao === funcao);
+      if (!membro || !membro.nome.trim() || !membro.cargo.trim()) {
+        toast({
+          title: "Erro",
+          description: `Preencha nome e cargo para: ${funcao}`,
+        });
+        return false;
+      }
     }
 
-    const testemunhasValidas = testemunhas.every(
+    // Filtrar testemunhas vazias e validar apenas as preenchidas
+    const testemunhasPreenchidas = testemunhas.filter((t) => t.nome.trim() || t.cpf.trim());
+    const testemunhasValidas = testemunhasPreenchidas.every(
       (t) => t.nome.trim() && t.cpf.trim()
     );
-    if (!testemunhasValidas) {
+    if (testemunhasPreenchidas.length > 0 && !testemunhasValidas) {
       toast({
         title: "Erro",
-        description: "Todas as testemunhas devem ter nome e CPF.",
+        description: "Todas as testemunhas preenchidas devem ter nome E CPF.",
       });
       return false;
     }
@@ -142,7 +158,20 @@ export default function FormInstauracaoSindicancia({
 
     setLoading(true);
     try {
-      // 1. Salvar dados da sindicância
+      // 1. Verificar se já existe sindicância para este processo e deletar
+      const { data: existentes, error: checkError } = await supabase
+        .from("sindicancias")
+        .select("id")
+        .eq("process_id", processId);
+
+      if (!checkError && existentes && existentes.length > 0) {
+        // Deletar sindicâncias anteriores
+        for (const item of existentes) {
+          await supabase.from("sindicancias").delete().eq("id", item.id);
+        }
+      }
+
+      // 2. Salvar dados da sindicância
       const { data: sindicancia, error: sindError } = await supabase
         .from("sindicancias")
         .insert({
@@ -156,33 +185,41 @@ export default function FormInstauracaoSindicancia({
 
       if (sindError) throw sindError;
 
-      // 2. Salvar membros da comissão
-      const membrosParaSalvar = membros.map((m) => ({
-        sindicancia_id: sindicancia.id,
-        nome: m.nome.trim(),
-        cargo: m.cargo.trim(),
-        funcao_comissao: m.funcao_comissao,
-        oab: m.oab?.trim() || null,
-      }));
+      // 3. Salvar os 3 membros obrigatórios
+      const funcoesobrigatorias = ["Presidente", "Secretário I", "Secretário II"];
+      const membrosParaSalvar = membros
+        .filter((m) => funcoesobrigatorias.includes(m.funcao_comissao))
+        .map((m) => ({
+          sindicancia_id: sindicancia.id,
+          nome: m.nome.trim(),
+          cargo: m.cargo.trim(),
+          funcao_comissao: m.funcao_comissao,
+          oab: m.oab?.trim() || null,
+        }));
 
-      const { error: membrosError } = await supabase
-        .from("comissao_membros")
-        .insert(membrosParaSalvar);
+      if (membrosParaSalvar.length > 0) {
+        const { error: membrosError } = await supabase
+          .from("comissao_membros")
+          .insert(membrosParaSalvar);
 
-      if (membrosError) throw membrosError;
+        if (membrosError) throw membrosError;
+      }
 
-      // 3. Salvar testemunhas
-      const testemunhasParaSalvar = testemunhas.map((t) => ({
-        sindicancia_id: sindicancia.id,
-        nome: t.nome.trim(),
-        cpf: t.cpf.trim(),
-      }));
+      // 4. Salvar testemunhas (apenas as preenchidas)
+      const testemunhasPreenchidas = testemunhas.filter((t) => t.nome.trim() && t.cpf.trim());
+      if (testemunhasPreenchidas.length > 0) {
+        const testemunhasParaSalvar = testemunhasPreenchidas.map((t) => ({
+          sindicancia_id: sindicancia.id,
+          nome: t.nome.trim(),
+          cpf: t.cpf.trim(),
+        }));
 
-      const { error: testemunhasError } = await supabase
-        .from("sindicancia_testemunhas")
-        .insert(testemunhasParaSalvar);
+        const { error: testemunhasError } = await supabase
+          .from("sindicancia_testemunhas")
+          .insert(testemunhasParaSalvar);
 
-      if (testemunhasError) throw testemunhasError;
+        if (testemunhasError) throw testemunhasError;
+      }
 
       toast({
         title: "Sucesso",
@@ -223,6 +260,13 @@ export default function FormInstauracaoSindicancia({
 
       if (!htmlContent || typeof htmlContent !== "string") {
         throw new Error("A resposta da função não foi um HTML válido.");
+      }
+
+      // Check if response contains an error message
+      if (htmlContent.includes("<h1>Error</h1>") || htmlContent.includes("<h1>error</h1>")) {
+        const errorMatch = htmlContent.match(/<p>(.*?)<\/p>/);
+        const errorMsg = errorMatch ? errorMatch[1] : "Erro ao gerar o documento";
+        throw new Error(errorMsg);
       }
 
       // Abrir o HTML em nova aba para o usuário imprimir/salvar como PDF

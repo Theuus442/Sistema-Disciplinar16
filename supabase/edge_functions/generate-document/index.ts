@@ -257,9 +257,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const { process_id, document_type } = await req.json()
 
     if (!process_id || !document_type || !templates[document_type as keyof typeof templates]) {
-      return new Response(JSON.stringify({ error: 'process_id e document_type válidos são obrigatórios' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+      const errorHtml = '<html><body><h1>Error</h1><p>process_id e document_type válidos são obrigatórios</p></body></html>'
+      return new Response(errorHtml, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+        status: 200,
       })
     }
 
@@ -267,9 +268,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
     if (!supabaseUrl || !serviceKey) {
-      return new Response(JSON.stringify({ error: 'SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausentes' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+      const errorHtml = '<html><body><h1>Error</h1><p>SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausentes</p></body></html>'
+      return new Response(errorHtml, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+        status: 200,
       })
     }
 
@@ -286,16 +288,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
       .single()
 
     if (processError) {
-      return new Response(JSON.stringify({ error: 'Processo não encontrado', details: processError.message }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 404,
+      const errorHtml = `<html><body><h1>Error</h1><p>Processo não encontrado: ${processError.message}</p></body></html>`
+      return new Response(errorHtml, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+        status: 200,
       })
     }
 
     if (!processData) {
-      return new Response(JSON.stringify({ error: 'Dados do processo não encontrados' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 404,
+      const errorHtml = '<html><body><h1>Error</h1><p>Dados do processo não encontrados</p></body></html>'
+      return new Response(errorHtml, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+        status: 200,
       })
     }
 
@@ -355,9 +359,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     })
   } catch (error: any) {
     console.error('generate-document error:', error)
-    return new Response(JSON.stringify({ error: error?.message || String(error) }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
+    const errorHtml = `<html><body><h1>Error</h1><p>${error?.message || String(error)}</p></body></html>`
+    return new Response(errorHtml, {
+      headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' },
+      status: 200,
     })
   }
 })

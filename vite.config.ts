@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
     // Disable HMR in the dev server to avoid unstable websocket reconnections in proxied environments
     hmr: false,
     fs: {
-      allow: ["./client", "./shared"],
+      allow: [".", "./client", "./shared"],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
     },
   },
