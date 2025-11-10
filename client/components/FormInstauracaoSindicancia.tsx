@@ -158,7 +158,20 @@ export default function FormInstauracaoSindicancia({
 
     setLoading(true);
     try {
-      // 1. Salvar dados da sindicância
+      // 1. Verificar se já existe sindicância para este processo e deletar
+      const { data: existentes, error: checkError } = await supabase
+        .from("sindicancias")
+        .select("id")
+        .eq("process_id", processId);
+
+      if (!checkError && existentes && existentes.length > 0) {
+        // Deletar sindicâncias anteriores
+        for (const item of existentes) {
+          await supabase.from("sindicancias").delete().eq("id", item.id);
+        }
+      }
+
+      // 2. Salvar dados da sindicância
       const { data: sindicancia, error: sindError } = await supabase
         .from("sindicancias")
         .insert({
@@ -172,10 +185,11 @@ export default function FormInstauracaoSindicancia({
 
       if (sindError) throw sindError;
 
-      // 2. Salvar membros da comissão (apenas os preenchidos)
-      const membrosPreenchidos = membros.filter((m) => m.nome.trim() && m.cargo.trim());
-      if (membrosPreenchidos.length > 0) {
-        const membrosParaSalvar = membrosPreenchidos.map((m) => ({
+      // 3. Salvar os 3 membros obrigatórios
+      const funcoesobrigatorias = ["Presidente", "Secretário I", "Secretário II"];
+      const membrosParaSalvar = membros
+        .filter((m) => funcoesobrigatorias.includes(m.funcao_comissao))
+        .map((m) => ({
           sindicancia_id: sindicancia.id,
           nome: m.nome.trim(),
           cargo: m.cargo.trim(),
@@ -183,6 +197,7 @@ export default function FormInstauracaoSindicancia({
           oab: m.oab?.trim() || null,
         }));
 
+      if (membrosParaSalvar.length > 0) {
         const { error: membrosError } = await supabase
           .from("comissao_membros")
           .insert(membrosParaSalvar);
@@ -190,7 +205,7 @@ export default function FormInstauracaoSindicancia({
         if (membrosError) throw membrosError;
       }
 
-      // 3. Salvar testemunhas (apenas as preenchidas)
+      // 4. Salvar testemunhas (apenas as preenchidas)
       const testemunhasPreenchidas = testemunhas.filter((t) => t.nome.trim() && t.cpf.trim());
       if (testemunhasPreenchidas.length > 0) {
         const testemunhasParaSalvar = testemunhasPreenchidas.map((t) => ({
