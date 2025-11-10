@@ -238,7 +238,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // 3. Preparar os dados do template
     const fusoHorario = 'America/Sao_Paulo'
     // Use created_at from sindicancia table (not data_instauracao which doesn't exist)
-    const dataInstauracao = sindicanciaData.created_at ? new Date(sindicanciaData.created_at) : new Date()
+    let dataInstauracao: Date
+    try {
+      dataInstauracao = sindicanciaData.created_at ? new Date(sindicanciaData.created_at) : new Date()
+      // Validate the date
+      if (isNaN(dataInstauracao.getTime())) {
+        dataInstauracao = new Date()
+      }
+    } catch {
+      dataInstauracao = new Date()
+    }
     const { data, hora, cidadeEData } = formatDateTime(dataInstauracao, fusoHorario)
 
     // Encontrar membros da comissão
@@ -258,23 +267,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
       : null
 
     const templateData = {
-      numero_sindicancia: sindicanciaData.numero_sindicancia || '[N/A]',
-      cidade_data_atual: cidadeEData,
-      nome_instituidor: sindicanciaData.nome_instituidor || '[Nome do Instituidor Pendente]',
-      cpf_instituidor: sindicanciaData.cpf_instituidor || '[CPF Pendente]',
-      nome_colaborador: (processData as any).employees?.nome_completo || '[Nome Pendente]',
-      cpf_colaborador: '[CPF do Colaborador Pendente]',
-      nome_presidente: presidente?.nome || '[Nome Pendente]',
-      cargo_presidente: presidente?.cargo || '[Cargo Pendente]',
-      nome_secretario1: secretario1?.nome || '[Nome Pendente]',
-      cargo_secretario1: secretario1?.cargo || '[Cargo Pendente]',
-      nome_secretario2: secretario2?.nome || '[Nome Pendente]',
-      cargo_secretario2: secretario2?.cargo || '[Cargo Pendente]',
-      oab_secretario2: secretario2?.oab || '[OAB Pendente]',
+      numero_sindicancia: sindicanciaData.numero_sindicancia || '',
+      cidade_data_atual: cidadeEData || 'Teresina/Piauí, [data]',
+      nome_instituidor: sindicanciaData.nome_instituidor || '',
+      cpf_instituidor: sindicanciaData.cpf_instituidor || '',
+      nome_colaborador: (processData as any).employees?.nome_completo || '',
+      cpf_colaborador: (processData as any).cpf || (processData as any).employees?.cpf || '',
+      nome_presidente: presidente?.nome || 'Sr(a). [Nome do Presidente]',
+      cargo_presidente: presidente?.cargo || '[Cargo]',
+      nome_secretario1: secretario1?.nome || 'Sr(a). [Nome - Secretário I]',
+      cargo_secretario1: secretario1?.cargo || '[Cargo]',
+      nome_secretario2: secretario2?.nome || 'Sr(a). [Nome - Secretário II]',
+      cargo_secretario2: secretario2?.cargo || '[Cargo]',
+      oab_secretario2: secretario2?.oab || '',
       data_ata: data,
       hora_ata: hora,
-      nome_testemunha: testemunha?.nome || '[Nome da Testemunha Pendente]',
-      cpf_testemunha: testemunha?.cpf || '[CPF da Testemunha Pendente]'
+      nome_testemunha: testemunha?.nome || 'Sr(a). [Nome da Testemunha]',
+      cpf_testemunha: testemunha?.cpf || ''
     }
 
     // 4. Preencher o template
